@@ -3,6 +3,8 @@
 Scraper + extrator de specs para achar **Dell OptiPlex / Lenovo ThinkCentre**
 usados na OLX, com busca web e API REST.
 
+![Gráfico preço × geração](print.webp)
+
 ## Pipeline
 
 ```
