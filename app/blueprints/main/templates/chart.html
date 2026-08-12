@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Gráfico — OLX Monitor{% endblock %}
+
+{% block content %}
+<h1>Preço × Geração do processador</h1>
+<p class="muted">{% if filters.cpu_family %}Anúncios {% if filters.cpu_family == 'intel' or filters.cpu_family == 'amd' %}do fabricante <strong>{{ filters.cpu_family }}</strong>{% else %}da família <strong>{{ filters.cpu_family }}</strong>{% endif %}{% else %}Selecione uma família ou fabricante de CPU no filtro{% endif %} — {{ points | length }} anúncio(s) com preço e geração plotados.</p>
+
+{% include "_filters.html" %}
+
+{% if not filters.cpu_family %}
+<div class="notice">
+    <p>Gerações de <strong>Intel</strong> e <strong>Ryzen</strong> usam escalas diferentes (Intel 1ª–14ª, Ryzen 1ª–9ª) — não dá para compará-las no mesmo eixo. Escolha uma família de CPU <strong>ou um fabricante</strong> (Intel/AMD) acima para ver o gráfico.</p>
+</div>
+{% else %}
+<div style="margin-top:1.5rem">
+    <canvas id="scatter" height="120"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const points = {{ points | tojson }};
+const genRange = {{ gen_range_for(filters.cpu_family) | tojson }};
+
+function brl(c) {
+    return "R$ " + (c / 100).toLocaleString("pt-BR", {minimumFractionDigits: 2});
+}
+
+const datasets = {};
+for (const p of points) {
+    const label = p.brand || "Outras";
+    if (!datasets[label]) datasets[label] = [];
+    datasets[label].push({
+        x: p.price_cents / 100,
+        y: p.generation,
+        id: p.id,
+        model: p.model || "",
+        cpu: p.cpu || "",
+        ram: p.ram_gb,
+    });
+}
+
+const palette = {Dell: "#1e88e5", Lenovo: "#e53935", Outras: "#8e8e8e"};
+const data = Object.entries(datasets).map(([label, pts]) => ({
+    label,
+    data: pts,
+    backgroundColor: palette[label] || "#8e8e8e",
+    pointRadius: 5,
+}));
+
+const ctx = document.getElementById("scatter");
+const chart = new Chart(ctx, {
+    type: "scatter",
+    data: {datasets: data},
+    options: {
+        responsive: true,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: (item) => {
+                        const p = item.raw;
+                        const ram = p.ram ? `${p.ram}GB RAM · ` : "";
+                        return `${p.model} (${p.cpu}) ${ram}${brl(p.x * 100)}`;
+                    },
+                },
+            },
+            legend: {position: "top"},
+        },
+        scales: {
+            x: {
+                title: {display: true, text: "Custo (R$)"},
+                ticks: {callback: (v) => "R$ " + v},
+            },
+            y: {
+                title: {display: true, text: `Geração do processador (${genRange[0]}ª–${genRange[1]}ª)`},
+                min: genRange[0],
+                max: genRange[1],
+                ticks: {stepSize: 1},
+            },
+        },
+        onClick: (evt, els) => {
+            if (els && els.length) {
+                const p = chart.data.datasets[els[0].datasetIndex].data[els[0].index];
+                window.location.href = "/ads/" + p.id;
+            }
+        },
+    },
+});
+</script>
+{% endif %}
+{% endblock %}

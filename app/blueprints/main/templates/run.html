@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Rodar — OLX Monitor{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Rodar coleta</h1>
+<p class="page-sub muted">Um termo por linha. A run roda em segundo plano com progresso ao vivo.</p>
+
+<div class="run-layout">
+    <section class="autostart-panel">
+        <h2>Autorun</h2>
+        <p class="page-sub muted">Roda <em>scrape + process</em> automaticamente a cada
+            {{ autostart.interval_minutes }} min, usando os termos salvos acima.</p>
+        <label class="switch">
+            <input type="checkbox" id="autostart-toggle" {% if autostart.enabled %}checked{% endif %}>
+            <span class="switch-slider"></span>
+            <span class="switch-label">Autorun ligado</span>
+        </label>
+        <p id="autostart-status" class="autostart-status muted" hidden></p>
+    </section>
+
+    <section class="history-panel">
+        <h2>Histórico de execuções</h2>
+        {% if run_history %}
+        <table class="history-table">
+            <thead>
+                <tr><th>#</th><th>Tipo</th><th>Início (Brasília)</th><th>Duração</th><th>Status</th><th>Resultado</th></tr>
+            </thead>
+            <tbody>
+                {% for h in run_history %}
+                <tr>
+                    <td>#{{ h.id }}</td>
+                    <td>{{ h.source }}</td>
+                    <td>{{ h.started_at.strftime('%d/%m %H:%M') if h.started_at else '—' }}</td>
+                    <td>{{ '%.0fs' | format(h.duration_sec) if h.duration_sec is not none else '—' }}</td>
+                    <td><span class="history-status" data-status="{{ h.status }}">{{ h.status }}</span></td>
+                    <td>{{ h.summary }}{% if h.error %}<span class="muted"> · {{ h.error }}</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="muted">Nenhuma execução registrada ainda.</p>
+        {% endif %}
+    </section>
+
+    <section class="add-ad-panel run-form">
+        <h2>Cadastrar anúncio manual</h2>
+        <p class="page-sub muted">Cole o link de um anúncio da OLX. O sistema valida, busca
+            o detalhe e cadastra no banco.</p>
+        <form id="add-ad-form">
+            <div class="field">
+                <label for="add-ad-url">Link do anúncio</label>
+                <input type="url" id="add-ad-url" name="url"
+                       placeholder="https://sp.olx.com.br/.../nome-do-anuncio-1234567890" required>
+            </div>
+            <label>
+                <input type="checkbox" id="add-ad-process" checked>
+                Extrair specs na hora (regex + DeepSeek)
+            </label>
+            <button type="submit" id="add-ad-button">Cadastrar</button>
+            <span id="add-ad-error" class="run-error" hidden></span>
+            <p id="add-ad-result" class="muted" hidden></p>
+        </form>
+    </section>
+
+    <form id="run-form" class="run-form">
+        <div class="field">
+            <label for="run-terms">Termos de busca</label>
+            <div class="terms-editor">
+                <textarea id="run-terms" name="terms" rows="8" readonly
+                          placeholder="dell optiplex sff&#10;lenovo thinkcentre m700&#10;dell optiplex 7050">{{ terms | join("\n") }}</textarea>
+                <div class="terms-actions">
+                    <button type="button" id="terms-edit" class="secondary outline">Editar</button>
+                    <button type="button" id="terms-save" class="secondary" hidden>Salvar</button>
+                    <button type="button" id="terms-cancel" class="secondary outline" hidden>Cancelar</button>
+                    <span id="terms-saved" class="terms-saved muted" hidden>salvo ✓</span>
+                </div>
+            </div>
+        </div>
+        <div class="field">
+            <label for="run-region">Região</label>
+            <input type="text" id="run-region" name="region" value="{{ region }}" placeholder="estado-sp">
+        </div>
+        <fieldset>
+            <legend>Etapas</legend>
+            <label><input type="checkbox" name="steps" value="scrape" checked> Scrape (coletar anúncios)</label>
+            <label><input type="checkbox" name="steps" value="enrich"> Enrich (buscar descrições)</label>
+            <label><input type="checkbox" name="steps" value="check"> Check (verificar publicados)</label>
+            <label><input type="checkbox" name="steps" value="process"> Process (extrair specs)</label>
+        </fieldset>
+        <button type="submit" id="run-button">Rodar</button>
+        <span id="run-error" class="run-error" hidden></span>
+    </form>
+
+    <section id="run-progress-panel" class="run-panel" hidden>
+        <h2>Run <span id="run-id" class="muted"></span></h2>
+        <p id="run-status" class="run-status">aguardando início…</p>
+        <progress id="run-progress" value="0" max="100"></progress>
+        <p id="run-message" class="muted"></p>
+        <pre id="run-log" class="run-log"></pre>
+    </section>
+</div>
+
+<script>
+    window.OLX_RUN_STEPS = {{ valid_steps | tojson }};
+    window.OLX_RUN_TERMS = {{ terms | tojson }};
+    window.OLX_AUTOSTART = {{ autostart | tojson }};
+</script>
+{% endblock %}

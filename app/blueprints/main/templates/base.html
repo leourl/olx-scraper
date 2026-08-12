@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block title %}OLX Monitor{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><strong><a class="brand" href="{{ url_for('main.index') }}">OLX Monitor</a></strong></li>
+        </ul>
+        <ul>
+            <li><a href="{{ url_for('main.index') }}" class="{{ 'active' if request.path == url_for('main.index') }}">Busca</a></li>
+            <li><a href="{{ url_for('main.chart') }}" class="{{ 'active' if request.path == url_for('main.chart') }}">Gráfico</a></li>
+            <li><a href="{{ url_for('main.offers') }}" class="{{ 'active' if request.path == url_for('main.offers') }}">Ofertas</a></li>
+            <li><a href="{{ url_for('main.review') }}" class="{{ 'active' if request.path == url_for('main.review') }}">Revisão</a></li>
+            <li><a href="{{ url_for('main.run') }}" class="{{ 'active' if request.path == url_for('main.run') }}">Rodar</a></li>
+            <li><button id="theme-toggle" class="secondary outline" aria-label="Alternar tema" style="width:auto;padding:.4rem .7rem;margin:0">🌙</button></li>
+        </ul>
+    </nav>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="container">
+        Coletor de anúncios usados da OLX · specs via DeepSeek
+    </footer>
+</body>
+</html>

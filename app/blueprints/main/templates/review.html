@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Revisão — OLX Monitor{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Revisão</h1>
+<p class="page-sub muted">Anúncios que precisam de atenção: sem specs extraídas ou com confiança baixa.</p>
+
+<h2 style="margin-top:1.5rem">Sem specs extraídas ({{ sem_specs | length }})</h2>
+{% if sem_specs %}
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Título</th><th>Preço</th><th>Cidade</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for ad in sem_specs %}
+            <tr>
+                <td>{{ ad.title }}</td>
+                <td>{{ ad.price_cents | brl }}</td>
+                <td>{{ ad.city }}</td>
+                <td><a href="{{ url_for('main.detail', ad_id=ad.id) }}">abrir</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="muted">Nenhum anúncio sem specs.</p>
+{% endif %}
+
+<h2 style="margin-top:1.5rem">Confiança baixa (&lt; 60%) ({{ baixa_conf | length }})</h2>
+{% if baixa_conf %}
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Título</th><th>CPU</th><th>Confiança</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for ad in baixa_conf %}
+            <tr>
+                <td>{{ ad.title }}</td>
+                <td>{{ ad.spec.cpu or '—' }}</td>
+                <td><span class="badge warn">{{ '%.0f%%' | format(ad.spec.confidence * 100) }}</span></td>
+                <td><a href="{{ url_for('main.detail', ad_id=ad.id) }}">abrir</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="muted">Nenhum anúncio com confiança baixa.</p>
+{% endif %}
+{% endblock %}

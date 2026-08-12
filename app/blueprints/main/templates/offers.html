@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Ofertas — OLX Monitor{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Melhores ofertas</h1>
+<p class="page-sub muted">Ranking por <strong>desconto vs mediana de mercado da mesma família e geração</strong>. Negativo = mais barato que a média.</p>
+
+{% include "_filters.html" %}
+
+<div class="table-wrap" style="margin-top:1.5rem">
+    <h2>Benchmark de mercado (R$)</h2>
+    <p class="muted">Mediana = preço justo · abaixo do p25 = bom negócio · acima do p75 = caro. Comparação por família e geração (Intel e Ryzen não dividem o mesmo eixo de geração).</p>
+    <table>
+        <thead>
+            <tr><th>Família · Geração</th><th>n</th><th>p25</th><th>mediana</th><th>p75</th></tr>
+        </thead>
+        <tbody>
+            {% for b in benchmarks %}
+            <tr>
+                <td>{{ b.family }} · {{ b.generation }}ª</td>
+                <td>{{ b.count }}</td>
+                <td>{{ b.p25 | brl }}</td>
+                <td><strong>{{ b.p50 | brl }}</strong></td>
+                <td>{{ b.p75 | brl }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 style="margin-top:1.5rem">Ranking ({{ deals | length }})</h2>
+{% if deals %}
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>#</th><th>Desconto</th><th>Anúncio</th><th>Preço</th><th>CPU</th><th>Família · Geração</th><th>RAM</th><th>Storage</th><th>Aviso</th></tr>
+        </thead>
+        <tbody>
+            {% for d in deals %}
+            <tr>
+                <td><span class="rank-num">{{ loop.index }}</span></td>
+                <td>
+                    {% if d.discount <= 0 %}
+                    <span class="discount-good">{{ d.discount }}%</span>
+                    {% else %}
+                    <span class="discount-bad">+{{ d.discount }}%</span>
+                    {% endif %}
+                </td>
+                <td><a href="{{ url_for('main.detail', ad_id=d.id) }}">{{ d.title }}</a></td>
+                <td>{{ d.price_cents | brl }}</td>
+                <td>{{ d.cpu or '—' }}</td>
+                <td>{{ d.family or '—' }}{% if d.family %} · {{ d.generation }}ª{% endif %}</td>
+                <td>{{ d.ram_gb or '—' }}</td>
+                <td>{{ d.storage_gb or '—' }}{% if d.storage_gb %} {{ d.storage_type or '' }}{% endif %}</td>
+                <td>
+                    {% if d.flag %}
+                    <span class="badge warn">{{ d.flag }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="muted">Nenhum anúncio com preço e geração encontrado com esses filtros.</p>
+{% endif %}
+{% endblock %}

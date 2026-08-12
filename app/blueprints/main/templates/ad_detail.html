@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ad.title }} — OLX Monitor{% endblock %}
+
+{% block content %}
+<p><a href="javascript:history.back()">‹ voltar</a></p>
+
+<h1 class="page-title">{{ ad.title }}</h1>
+{% if ad.user_disabled %}
+<p><span class="badge oculto">oculto manualmente</span></p>
+{% endif %}
+{% if not ad.is_active %}
+<p><span class="badge removed">removido{% if ad.removed_at %} em {{ ad.removed_at.strftime('%d/%m/%Y %H:%M') }} (UTC){% endif %}</span></p>
+{% endif %}
+<p class="big-price">{{ ad.price_cents | brl }}</p>
+<p class="muted">
+    {{ ad.city }}{% if ad.state %} / {{ ad.state }}{% endif %}
+    {% if ad.published_at %} · publicado em {{ ad.published_at.strftime('%d/%m/%Y %H:%M') }} (UTC){% endif %}
+    · coletado em {{ ad.scraped_at.strftime('%d/%m/%Y %H:%M') }}
+</p>
+<p>
+    <a href="{{ ad.url }}" target="_blank" rel="noopener" role="button" class="secondary outline">Ver na OLX ↗</a>
+</p>
+<p>
+    <label class="switch">
+        <input type="checkbox" id="ad-available-toggle" data-ad-id="{{ ad.id }}" {% if not ad.user_disabled %}checked{% endif %}>
+        <span class="switch-slider"></span>
+        <span class="switch-label">Disponível</span>
+    </label>
+    <span id="ad-toggle-status" class="muted" hidden></span>
+</p>
+
+<div class="grid">
+    <div>
+        {% if ad.images %}
+        <div class="gallery-main">
+            <img id="gallery-main" class="app-img" src="{{ ad.images[0].url }}" alt="{{ ad.title }}">
+        </div>
+        {% if ad.images | length > 1 %}
+        <div class="gallery-thumbs">
+            {% for img in ad.images %}
+            <img class="app-img {{ 'active' if loop.first }}" data-full="{{ img.url }}" src="{{ img.url }}" alt="Imagem {{ loop.index }}" loading="lazy">
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="gallery-main"><div class="card-img"></div></div>
+        {% endif %}
+    </div>
+
+    <div>
+        <h2>Specs extraídas</h2>
+        {% if ad.spec %}
+        <div class="badges" style="margin-bottom:.6rem">
+            {% if ad.spec.brand %}<span class="badge brand">{{ ad.spec.brand }}</span>{% endif %}
+            {% if ad.spec.form_factor %}<span class="badge neutral">{{ ad.spec.form_factor }}</span>{% endif %}
+        </div>
+        <div class="table-wrap">
+            <table class="specs">
+                <tbody>
+                    <tr><td>Marca</td><td>{{ ad.spec.brand or '—' }}</td></tr>
+                    <tr><td>Modelo</td><td>{{ ad.spec.model or '—' }}</td></tr>
+                    <tr><td>Formato</td><td>{{ ad.spec.form_factor or '—' }}</td></tr>
+                    <tr><td>CPU</td><td>{{ ad.spec.cpu or '—' }}</td></tr>
+                    <tr><td>Família CPU</td><td>{{ ad.spec.cpu_family or '—' }}{% if ad.spec.cpu_model %} {{ ad.spec.cpu_model }}{% endif %}</td></tr>
+                    <tr><td>Geração</td><td>{{ ad.spec.cpu_generation or '—' }}{% if ad.spec.cpu_generation %}ª{% endif %}</td></tr>
+                    <tr><td>RAM</td><td>{{ ad.spec.ram_gb or '—' }}{% if ad.spec.ram_gb %} GB{% endif %}</td></tr>
+                    <tr><td>Armazenamento</td><td>{{ ad.spec.storage_gb or '—' }}{% if ad.spec.storage_gb %} GB{% endif %} {{ ad.spec.storage_type or '' }}</td></tr>
+                    <tr><td>GPU</td><td>{{ ad.spec.gpu or '—' }}</td></tr>
+                    <tr><td>Confiança</td><td>{{ '%.0f%%' | format(ad.spec.confidence * 100) }} <span class="muted">({{ ad.spec.extraction_method or '—' }})</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="muted">Ainda sem specs extraídas para este anúncio.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if ad.description %}
+<h2>Descrição original</h2>
+<div class="desc muted">{{ ad.description }}</div>
+{% endif %}
+{% endblock %}

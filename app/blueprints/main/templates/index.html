@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Busca — OLX Monitor{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Busca de anúncios</h1>
+<p class="page-sub muted">Anúncios usados com specs extraídas via regex + LLM.</p>
+
+{% include "_filters.html" %}
+
+<div class="stats-strip">
+    <span class="stat-chip"><strong>{{ stats.total }}</strong> anúncios</span>
+    <span class="stat-chip"><strong>{{ stats.com_specs }}</strong> com specs</span>
+    <span class="stat-chip"><strong>{{ stats.sem_specs }}</strong> sem specs</span>
+    <span class="stat-chip">faixa de preço <strong>{{ (stats.preco_cents.min or 0) | brl }} – {{ (stats.preco_cents.max or 0) | brl }}</strong></span>
+</div>
+
+<p class="muted">{{ total }} anúncio(s) com os filtros atuais</p>
+
+{% if ads %}
+<div class="ad-grid">
+    {% for ad in ads %}
+    <article class="ad-card">
+        <a href="{{ url_for('main.detail', ad_id=ad.id) }}">
+            {% if ad.images %}
+            <img class="app-img card-img" src="{{ ad.images[0].url }}" alt="{{ ad.title }}" loading="lazy">
+            {% else %}
+            <div class="card-img"></div>
+            {% endif %}
+        </a>
+        <div class="card-body">
+            <a href="{{ url_for('main.detail', ad_id=ad.id) }}"><h4>{{ ad.title }}</h4></a>
+            <div class="badges">
+                {% if ad.spec and ad.spec.brand %}<span class="badge brand">{{ ad.spec.brand }}</span>{% endif %}
+                {% if ad.spec and ad.spec.form_factor %}<span class="badge neutral">{{ ad.spec.form_factor }}</span>{% endif %}
+                {% if not ad.spec %}<span class="badge warn">sem specs</span>{% endif %}
+                {% if not ad.is_active %}<span class="badge removed">removido</span>{% endif %}
+                {% if ad.user_disabled %}<span class="badge oculto">oculto</span>{% endif %}
+            </div>
+            <span class="card-price">{{ ad.price_cents | brl }}</span>
+            <p class="card-meta">
+                {% if ad.spec %}
+                    {{ ad.spec.cpu or '' }}{% if ad.spec.cpu_generation %} · {{ ad.spec.cpu_generation }}ª geração{% endif %} · {{ ad.spec.ram_gb or '?' }}GB RAM · {{ ad.spec.storage_gb or '?' }}{{ ad.spec.storage_type or '' }}
+                {% endif %}
+            </p>
+            <div class="card-footer">
+                <span>{{ ad.city }}{% if ad.state %} / {{ ad.state }}{% endif %}</span>
+                <span>{% if ad.published_at %}{{ ad.published_at.strftime('%d/%m') }}{% endif %}</span>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('main.index', page=page-1, **page_args) }}" role="button" class="secondary outline">‹ anterior</a>
+    {% endif %}
+    <span class="muted">página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('main.index', page=page+1, **page_args) }}" role="button" class="secondary outline">próxima ›</a>
+    {% endif %}
+</div>
+{% else %}
+<p>Nenhum anúncio encontrado com esses filtros.</p>
+{% endif %}
+{% endblock %}

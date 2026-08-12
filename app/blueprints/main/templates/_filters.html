@@ -1,0 +1,79 @@
+<div class="filters">
+    <div class="filters-header">
+        <h2>Filtros</h2>
+        <button id="filters-toggle" class="secondary outline" type="button" aria-expanded="true">Filtros</button>
+    </div>
+    <form method="get" id="filters-form">
+        <div class="field">
+            <label for="q">Texto</label>
+            <input type="search" id="q" name="q" value="{{ filters.q or '' }}" placeholder="optiplex 7050...">
+        </div>
+        <div class="field">
+            <label for="brand">Marca</label>
+            <input type="text" id="brand" name="brand" value="{{ filters.brand or '' }}" placeholder="dell / lenovo">
+        </div>
+        <div class="field">
+            <label for="cpu_family">Família CPU</label>
+            <select id="cpu_family" name="cpu_family">
+                <option value="">qualquer</option>
+                <option value="intel" {% if filters.cpu_family == 'intel' %}selected{% endif %}>Intel (qualquer)</option>
+                <option value="amd" {% if filters.cpu_family == 'amd' %}selected{% endif %}>AMD (qualquer)</option>
+                {% for grupo, familias in cpu_family_groups.items() %}
+                <optgroup label="{{ grupo }}">
+                    {% for fam in familias %}
+                    <option value="{{ fam }}" {% if filters.cpu_family == fam %}selected{% endif %}>{{ fam }}</option>
+                    {% endfor %}
+                </optgroup>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            {% set gen_range = gen_range_for(filters.cpu_family) %}
+            <label for="gen_min">Geração mín.{% if filters.cpu_family %} ({{ filters.cpu_family }}){% endif %}</label>
+            <select id="gen_min" name="gen_min"
+                    {% if not gen_range %}disabled title="selecione uma família com geração (i3/i5/i7/i9/ryzen3/5/7/9)"{% endif %}>
+                <option value="">qualquer</option>
+                {% if gen_range %}
+                {% for gen in range(gen_range[0], gen_range[1] + 1) %}
+                <option value="{{ gen }}" {% if filters.gen_min == gen %}selected{% endif %}>{{ gen }}ª</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="ram_min">RAM mínima (GB)</label>
+            <input type="number" id="ram_min" name="ram_min" min="1" value="{{ filters.ram_min or '' }}">
+        </div>
+        <div class="field">
+            <label for="storage_min">Storage mín. (GB)</label>
+            <input type="number" id="storage_min" name="storage_min" min="1" value="{{ filters.storage_min or '' }}">
+        </div>
+        <div class="field">
+            <label for="price_max">Preço máx. (R$)</label>
+            <input type="number" id="price_max" name="price_max" min="1" step="0.01" value="{{ filters.price_max or '' }}">
+        </div>
+        <div class="field">
+            <label for="form_factor">Formato</label>
+            <select id="form_factor" name="form_factor">
+                <option value="">qualquer</option>
+                {% for ff in ['mini', 'sff', 'tower', 'notebook', 'all-in-one', 'desktop'] %}
+                <option value="{{ ff }}" {% if filters.form_factor == ff %}selected{% endif %}>{{ ff }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="sort">Ordenar</label>
+            <select id="sort" name="sort">
+                {% for key, label in sort_labels.items() %}
+                <option value="{{ key }}" {% if filters.sort == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <label class="filter-check">
+            <input type="checkbox" name="include_inactive" value="1"
+                   {% if filters.include_inactive %}checked{% endif %}> incluir removidos/ocultos
+        </label>
+        <button type="submit">Filtrar</button>
+        <a href="{{ url_for(action) }}" role="button" class="secondary outline">Limpar</a>
+    </form>
+</div>
